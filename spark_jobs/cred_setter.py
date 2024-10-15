@@ -15,6 +15,13 @@ def set_creds():
     os.environ['AWS_SECRET_ACCESS_KEY'] = config['integration']['aws_secret_access_key']
     os.environ['AWS_SESSION_TOKEN'] = config['integration'].get('aws_session_token', None)
 
-# refreshSecurityToken()
+# set_creds()
+if __name__ == '__main__':
+    set_creds()
+    print(os.environ["AWS_ACCESS_KEY_ID"])
+    print(f'export {os.environ["AWS_ACCESS_KEY_ID"]}')
+    print(f'export {os.environ["AWS_SECRET_ACCESS_KEY"]}')
+    print(f'export {os.environ["AWS_SESSION_TOKEN"]}')
+
 
 
