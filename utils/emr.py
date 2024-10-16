@@ -73,8 +73,8 @@ def bid_price_log_aggregate_config(env: str):  # type: ignore[no-untyped-def]
                             "WeightedCapacity": 1,
                             "EbsConfiguration": {
                                 "EbsBlockDeviceConfigs": [
-                                    {"VolumeSpecification": {"VolumeType": "gp2", "SizeInGB": 64}},
-                                    {"VolumeSpecification": {"VolumeType": "gp2", "SizeInGB": 64}},
+                                    {"VolumeSpecification": {"VolumeType": "gp3", "SizeInGB": 64}},
+                                    {"VolumeSpecification": {"VolumeType": "gp3", "SizeInGB": 64}},
                                 ]
                             },
                             "BidPriceAsPercentageOfOnDemandPrice": 100,
@@ -147,21 +147,6 @@ def bid_price_log_aggregate_config(env: str):  # type: ignore[no-untyped-def]
                     s3://mntn-data-archive-{env}/_spark/drivers/hadoop-aws-3.2.2.jar"
                 },
             }
-            # ,
-            # {
-            #     "Classification": "hive-site",
-            #     "Properties": {
-            #         "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
-            #         # noqa: B950
-            #     },
-            # },
-            # {
-            #     "Classification": "spark-hive-site",
-            #     "Properties": {
-            #         "hive.metastore.client.factory.class": "com.amazonaws.glue.catalog.metastore.AWSGlueDataCatalogHiveClientFactory"
-            #         # noqa: B950
-            #     },
-            # },
         ],
         "BootstrapActions": [
             {
@@ -173,16 +158,15 @@ def bid_price_log_aggregate_config(env: str):  # type: ignore[no-untyped-def]
             }
         ],
     }
-
     return JOB_FLOW_OVERRIDES
 
 
 def bid_price_logs_agg(
-    data_source_id: int, env: str, date: str
+    output_location: str, env: str, date: str,hour:str
 ) -> list[dict[str, Collection[str]]]:
     spark_steps = [
         {
-            "Name": f"aggregate bid logs for  {date} in {env} for ds id {data_source_id}",
+            "Name": f"aggregate bid logs for  {date} in {env} for target location for data is {output_location}",
             "ActionOnFailure": "CONTINUE",
             "HadoopJarStep": {
                 "Jar": "command-runner.jar",
@@ -225,21 +209,15 @@ def bid_price_logs_agg(
                     "spark.emr.default.executor.cores=5",
                     "--conf",
                     "spark.emr.default.executor.memory=32G",
-                    f"s3://mntn-data-airflow-{env}/dags/targeting/jobs/hashed_email_signals.py",
-                    "-d",  # param switch for date in "YYYY-MM-DD"
+                    f"s3://bidder-emr-dev/pyspark/bid_price_agg_hrly.py",
+                    "date",  # param switch for date in "YYYY-MM-DD"
                     f"{date}",
-                    "-e",
-                    f"{env}",
-                    "-i",
-                    f"{data_source_id}",
+                    "hour",
+                    f"{hour}",
+                    "output_location",
+                    f"{output_location}",
                 ],
             },
         }
     ]
-
-    # date = '2024-10-10'
-    # hour = '12'
-    # output_location = s3a: // mntn - data - archive - dev / bid_price_log_agg
-    #
-
     return spark_steps
