@@ -107,8 +107,8 @@ class BidderLogAggregationHour:
 
     @property
     def s3_path(self) -> list:
-        # return [f"{self.base_path}/{path}" for path in self.data_source_prefix]
-        return ["data"]
+        return [f"{self.base_path}/{path}" for path in self.data_source_prefix]
+
 
     @property
     def partition_columns(self) -> List[str]:
