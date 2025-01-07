@@ -58,7 +58,8 @@ class BidderLogAggregationHour:
 
     @property
     def s3_path_out(self):  # type: ignore[no-untyped-def]
-        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_v2/"
+        # s3://mntn-data-archive-dev/bid_price_log_agg_databricks_v1/
+        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_databricks_v1/"
         return S3Path
 
     @property
