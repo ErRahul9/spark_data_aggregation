@@ -1,20 +1,16 @@
 import json
 
 from airflow import DAG
-from airflow.providers.databricks.operators.databricks import ( DatabricksSubmitRunOperator,
+from airflow.providers.databricks.operators.databricks import (
+    DatabricksSubmitRunOperator,
 )
 from airflow.utils.dates import days_ago
 
-
 DATABRICKS_CLUSTER_JSON = {
-"settings": {
-"name": "[test] bid_aggregation_job",
-"email_notifications": {
-  "no_alert_for_skipped_runs": False
-}
-},
+    "access_control_list": [
+        {"user_name": "rparashar@mountain.com", "permission_level": "CAN_MANAGE"}
+    ],
     "tasks": [
-
         {
             "task_key": "bid_agg_hrly",
             "run_if": "ALL_SUCCESS",
@@ -36,13 +32,12 @@ DATABRICKS_CLUSTER_JSON = {
                     "ebs_volume_count": 3,
                     "ebs_volume_size": 100,
                 },
-                "node_type_id": "r8g.xlarge",
-                "driver_node_type_id": "r8g.xlarge",
+                "node_type_id": "r8g.4xlarge",
+                "driver_node_type_id": "r8g.2xlarge",
                 "custom_tags": {"team": "bidder", "project": "rahul-ad-hoc"},
                 "enable_elastic_disk": False,
-                "single_user_name": "rparashar@mountain.com",
                 "enable_local_disk_encryption": False,
-                "data_security_mode": "SINGLE_USER",
+                "data_security_mode": "USER_ISOLATION",
                 "autoscale": {"min_workers": 2, "max_workers": 10},
             },
         }
@@ -51,9 +46,8 @@ DATABRICKS_CLUSTER_JSON = {
         "git_url": "https://github.com/ErRahul9/spark_data_aggregation.git",
         "git_provider": "gitHub",
         "git_branch": "main",
-    }
+    },
 }
-
 
 
 
@@ -67,7 +61,7 @@ with DAG(
 ) as dag:
     submit_databricks_job = DatabricksSubmitRunOperator(
         task_id="submit_databricks_job",
-        databricks_conn_id="databricks_default",  # Connection ID configured in Airflow
+        databricks_conn_id="databricks_bidder",  # Connection ID configured in Airflow
         json=DATABRICKS_CLUSTER_JSON,  # Pass the job configuration
     )
 
