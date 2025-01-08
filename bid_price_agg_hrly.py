@@ -504,16 +504,16 @@ def main() -> None:
     logger.info(args.hour)
     yesterday_date = (datetime.now() - timedelta(days=1)).date()
     yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
-    # if not args.mods:
-    #     mods = [999]
-    # else:
-    #     mods = list(map(int, args.mods.split()))
+    if not args.mods:
+        mods = [999]
+    else:
+        mods = list(map(int, args.mods.split()))
 
     BidderLogAggregationHour(
         env=args.environment,
         data_source_date=args.date if args.date else yesterday_date_str,
         data_source_hour=args.hour if args.hour else None,
-        cgid_mods=args.mods,
+        cgid_mods=mods,
     ).populate()
 
 
