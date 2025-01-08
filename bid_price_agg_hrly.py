@@ -493,8 +493,8 @@ def main() -> None:
         "-mods",
         "--mods",
         required=False,
-        nargs="+",
-        default=[999],
+        type=str,
+        # default=[999],
         help="optional cgid_mod values for IHP",
     )
     # get the command line args
