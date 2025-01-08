@@ -10,8 +10,8 @@ from airflow.utils.dates import days_ago
 def __process_mods(**kwargs):
     mods = kwargs["params"]["mods"]
 
-DATABRICKS_CLUSTER_JSON = {
 
+DATABRICKS_CLUSTER_JSON = {
     "access_control_list": [
         {"user_name": "rparashar@mountain.com", "permission_level": "CAN_MANAGE"}
     ],
@@ -21,7 +21,16 @@ DATABRICKS_CLUSTER_JSON = {
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
                 "python_file": "bid_price_agg_hrly.py",
-                "parameters": ["-e", "prod", "-dd", '{{ ds }}', "-hh", "12",'-mods','{{ params.mods }}'],
+                "parameters": [
+                    "-e",
+                    "prod",
+                    "-dd",
+                    "{{ params.dd }}",
+                    "-hh",
+                    "{{ params.hh }}",
+                    "-mods",
+                    "{{ params.mods }}",
+                ],
                 "source": "GIT",
             },
             "new_cluster": {
@@ -54,7 +63,6 @@ DATABRICKS_CLUSTER_JSON = {
 }
 
 
-
 default_args = {"owner": "airflow"}
 
 with DAG(
@@ -62,12 +70,15 @@ with DAG(
     start_date=days_ago(2),
     schedule_interval=None,
     default_args=default_args,
-    params = {"mods":"15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75"}
+    params={
+        "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
+        "hh": None,
+        "dd": None,
+    },
 ) as dag:
     submit_databricks_job = DatabricksSubmitRunOperator(
         task_id="submit_databricks_job",
         databricks_conn_id="databricks_bidder",  # Connection ID configured in Airflow
         json=DATABRICKS_CLUSTER_JSON,  # Pass the job configuration
-
     )
     submit_databricks_job

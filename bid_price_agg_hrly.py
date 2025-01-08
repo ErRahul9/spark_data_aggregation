@@ -58,7 +58,6 @@ class BidderLogAggregationHour:
 
     @property
     def s3_path_out(self):  # type: ignore[no-untyped-def]
-        # s3://mntn-data-archive-dev/bid_price_log_agg_databricks_v1/
         S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_databricks_v1/"
         return S3Path
 
@@ -109,7 +108,6 @@ class BidderLogAggregationHour:
     @property
     def s3_path(self) -> list:
         return [f"{self.base_path}/{path}" for path in self.data_source_prefix]
-
 
     @property
     def partition_columns(self) -> List[str]:
@@ -181,7 +179,9 @@ class BidderLogAggregationHour:
                 StructField("daily_campaign_group_impression_cap", StringType(), True),
                 StructField("picked_term_id", StringType(), True),
                 StructField("eligible_term_ids", StringType(), True),
-                StructField("terms", ArrayType(MapType(StringType(), StringType())), True),
+                StructField(
+                    "terms", ArrayType(MapType(StringType(), StringType())), True
+                ),
             ]
         )
 
@@ -272,7 +272,9 @@ class BidderLogAggregationHour:
             .getField("daily_campaign_group_impression_cap")
             .alias("daily_campaign_group_impression_cap"),
             (F.col("campaign_group_id") % 100).alias("cgid_mod"),
-            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias("dt"),
+            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias(
+                "dt"
+            ),
             (F.hour(F.from_unixtime(F.col("epoch") / 1000))).alias("hh"),
         )
         df_cg_id_agg = df_columns_selected.groupby(
@@ -284,16 +286,24 @@ class BidderLogAggregationHour:
             F.col("hh").alias("hh"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
-            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_204_bids"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
+            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_204_bids"
+            ),
             # F.sum(F.when(F.col("has_price"), 1)).alias("total_bids"),
             # F.sum(F.when(~F.col("has_price"), 1)).alias("total_204_bids"),
             F.sum(F.col("price")).alias("bid_price_per_hour"),
-            F.max(F.col("flight_campaign_group_spend")).alias("max_flight_campaign_group_spend"),
+            F.max(F.col("flight_campaign_group_spend")).alias(
+                "max_flight_campaign_group_spend"
+            ),
             F.max(F.col("flight_campaign_group_spend_cap")).alias(
                 "max_flight_campaign_group_spend_cap"
             ),
-            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
+            F.max(F.col("flight_campaign_impression")).alias(
+                "max_flight_campaign_impression"
+            ),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
@@ -303,7 +313,9 @@ class BidderLogAggregationHour:
             F.max(F.col("flight_campaign_group_impression_cap")).alias(
                 "max_flight_campaign_group_impression_cap"
             ),
-            F.max(F.col("daily_campaign_group_spend")).alias("max_daily_campaign_group_spend"),
+            F.max(F.col("daily_campaign_group_spend")).alias(
+                "max_daily_campaign_group_spend"
+            ),
             F.max(F.col("daily_campaign_group_spend_cap")).alias(
                 "max_daily_campaign_group_spend_cap"
             ),
@@ -327,18 +339,30 @@ class BidderLogAggregationHour:
             F.count(F.col("auction_id")).alias("total_bid_requests"),
             # F.count(F.when(F.col("has_price"), 1)).alias("total_bids"),
             # F.count(F.when(~F.col("has_price"), 1)).alias("count_of_204_bids"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
-            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_204_bids"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
+            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_204_bids"
+            ),
             F.sum(F.col("price")).alias("bid_price_per_hour"),
             F.max(F.col("flight_campaign_spend")).alias("max_flight_campaign_spend"),
-            F.max(F.col("flight_campaign_spend_cap")).alias("max_flight_campaign_spend_cap"),
+            F.max(F.col("flight_campaign_spend_cap")).alias(
+                "max_flight_campaign_spend_cap"
+            ),
             F.max(F.col("daily_campaign_spend")).alias("max_daily_campaign_spend"),
-            F.max(F.col("daily_campaign_spend_cap")).alias("max_daily_campaign_spend_cap"),
-            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
+            F.max(F.col("daily_campaign_spend_cap")).alias(
+                "max_daily_campaign_spend_cap"
+            ),
+            F.max(F.col("flight_campaign_impression")).alias(
+                "max_flight_campaign_impression"
+            ),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
-            F.max(F.col("daily_campaign_impression")).alias("max_daily_campaign_impression"),
+            F.max(F.col("daily_campaign_impression")).alias(
+                "max_daily_campaign_impression"
+            ),
             F.max(F.col("daily_campaign_impression_cap")).alias(
                 "max_daily_campaign_impression_cap"
             ),
@@ -355,7 +379,7 @@ class BidderLogAggregationHour:
             F.col("eligible_term_id"),
             F.col("picked_term_id"),
             F.col("auction_id"),
-            F.col("has_price").cast('Boolean'),
+            F.col("has_price").cast("Boolean"),
             F.col("threshold_failure_reasons"),
             F.explode(F.col("terms")).alias("exploded_terms"),
         )
@@ -372,12 +396,18 @@ class BidderLogAggregationHour:
             F.col("auction_id"),
             F.col("eligible_term_id"),
             F.col("picked_term_id"),
-            F.col("has_price").cast('Boolean'),
+            F.col("has_price").cast("Boolean"),
             F.col("exploded_terms").getField("id").alias("term_id"),
             F.col("exploded_terms").getField("spend").alias("term_spend"),
             F.col("exploded_terms").getField("spend_cap").alias("term_spend_cap"),
-            F.col("exploded_terms").getField("spend_capped").alias("spend_capped").cast("Boolean"),
-            F.col("exploded_terms").getField("rate_limited").alias("rate_limited").cast("Boolean"),
+            F.col("exploded_terms")
+            .getField("spend_capped")
+            .alias("spend_capped")
+            .cast("Boolean"),
+            F.col("exploded_terms")
+            .getField("rate_limited")
+            .alias("rate_limited")
+            .cast("Boolean"),
             F.col("exploded_terms")
             .getField("throttling_percentage")
             .alias("throttling_percentage"),
@@ -399,10 +429,18 @@ class BidderLogAggregationHour:
             F.col("term_id"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
-            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_204_bids"),
-            F.sum(F.when(F.col("spend_capped").cast("boolean"), 1).otherwise(0)).alias("total_spend_capped"),
-            F.sum(F.when(F.col("rate_limited").cast("boolean"), 1).otherwise(0)).alias("total_rate_limited"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
+            F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_204_bids"
+            ),
+            F.sum(F.when(F.col("spend_capped").cast("boolean"), 1).otherwise(0)).alias(
+                "total_spend_capped"
+            ),
+            F.sum(F.when(F.col("rate_limited").cast("boolean"), 1).otherwise(0)).alias(
+                "total_rate_limited"
+            ),
             F.max(F.col("term_spend")).cast(DecimalType(10, 2)).alias("max_term_spend"),
             F.max(F.col("term_spend_cap")).alias("max_term_spend_cap"),
             F.max(F.col("throttling_percentage")).alias("throttling_percentage"),
@@ -418,7 +456,9 @@ class BidderLogAggregationHour:
         ).agg(F.count(F.col("auction_id")).alias("fail_count_cg_id"))
 
         df_cg_id_data = df_cg_id_agg.join(
-            df_failure_reasons_cg_id, on=["dt", "hh", "campaign_group_id", "flight_id"], how="inner"
+            df_failure_reasons_cg_id,
+            on=["dt", "hh", "campaign_group_id", "flight_id"],
+            how="inner",
         )
 
         df_failure_reasons_c_id = df_columns_selected.groupby(
@@ -426,7 +466,9 @@ class BidderLogAggregationHour:
             F.col("hh").alias("hh"),
             F.col("campaign_group_id"),
             F.col("campaign_id"),
-            F.col("threshold_failure_reasons").alias("campaign_threshold_failure_reasons"),
+            F.col("threshold_failure_reasons").alias(
+                "campaign_threshold_failure_reasons"
+            ),
         ).agg(F.count(F.col("auction_id")).alias("fail_count_campaign_id"))
 
         df_camp_data = df_cam_agg.join(
@@ -465,6 +507,8 @@ class BidderLogAggregationHour:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    yesterday_date = (datetime.now() - timedelta(days=1)).date()
+    yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
 
     def parse_date(date_str):  # type: ignore[no-untyped-def]
         return datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -502,8 +546,7 @@ def main() -> None:
     logger.info(args)
     logger.info(args.date)
     logger.info(args.hour)
-    yesterday_date = (datetime.now() - timedelta(days=1)).date()
-    yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
+
     if not args.mods:
         mods = [999]
     else:
@@ -511,7 +554,7 @@ def main() -> None:
 
     BidderLogAggregationHour(
         env=args.environment,
-        data_source_date=args.date if args.date else yesterday_date_str,
+        data_source_date=args.date if args.date is not None else yesterday_date_str,
         data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()
