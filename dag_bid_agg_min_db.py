@@ -59,7 +59,7 @@ DATABRICKS_CLUSTER_JSON = {
 default_args = {"owner": "airflow"}
 
 with DAG(
-    "dag_databricks_bidder_log_aggregation",
+    "dag_databricks_bidder_log_aggregation_min",
     start_date=days_ago(2),
     schedule_interval="15 16 * * *",
     default_args=default_args,
