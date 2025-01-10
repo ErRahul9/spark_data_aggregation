@@ -10,10 +10,10 @@ DATABRICKS_CLUSTER_JSON = {
     ],
     "tasks": [
         {
-            "task_key": "bidder_log_aggregation_hrly",
+            "task_key": "bidder_log_aggregation_min",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "bid_price_agg_hrly.py",
+                "python_file": "bid_price_agg_min.py",
                 "parameters": [
                     "-e",
                     "prod",
