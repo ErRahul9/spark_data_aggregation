@@ -25,7 +25,7 @@ DATABRICKS_CLUSTER_JSON = {
                     "-e",
                     "prod",
                     "-dd",
-                    "{{ params.dd }}",
+                    "{{ macros.ds_add(ds, -1) }}",
                     "-hh",
                     "{{ params.hh }}",
                     "-mods",
@@ -46,12 +46,12 @@ DATABRICKS_CLUSTER_JSON = {
                     "ebs_volume_count": 3,
                     "ebs_volume_size": 100,
                 },
-                "node_type_id": "r8g.4xlarge",
+                "node_type_id": "r8g.8xlarge",
                 "driver_node_type_id": "r8g.2xlarge",
                 "custom_tags": {"team": "bidder", "project": "rahul-ad-hoc"},
                 "enable_elastic_disk": False,
                 "enable_local_disk_encryption": False,
-                "autoscale": {"min_workers": 2, "max_workers": 10},
+                "autoscale": {"min_workers": 2, "max_workers": 16},
             },
         }
     ],
@@ -68,12 +68,11 @@ default_args = {"owner": "airflow"}
 with DAG(
     "dag_databricks_log_agg",
     start_date=days_ago(2),
-    schedule_interval=None,
+    schedule_interval="15 16 * * *",
     default_args=default_args,
     params={
         "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
         "hh": None,
-        "dd": None,
     },
 ) as dag:
     submit_databricks_job = DatabricksSubmitRunOperator(
