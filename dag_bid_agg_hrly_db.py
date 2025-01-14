@@ -6,7 +6,7 @@ from airflow.utils.dates import days_ago
 
 DATABRICKS_CLUSTER_JSON = {
     "access_control_list": [
-        {"user_name": "rparashar@mountain.com", "permission_level": "CAN_MANAGE"}
+        {"user_name": "rparashar@mountain.com", "permission_level": "CAN_MANAGE"},
     ],
     "tasks": [
         {
@@ -18,7 +18,7 @@ DATABRICKS_CLUSTER_JSON = {
                     "-e",
                     "prod",
                     "-dd",
-                    "{{ macros.ds_add(ds, -1) }}",
+                    "{{ params.dd }}",
                     "-hh",
                     "{{ params.hh }}",
                     "-mods",
@@ -44,7 +44,7 @@ DATABRICKS_CLUSTER_JSON = {
                 "custom_tags": {"team": "bidder", "project": "rahul-ad-hoc"},
                 "enable_elastic_disk": False,
                 "enable_local_disk_encryption": False,
-                "autoscale": {"min_workers": 2, "max_workers": 16},
+                "autoscale": {"min_workers": 2, "max_workers": 10},
             },
         }
     ],
@@ -66,6 +66,7 @@ with DAG(
     params={
         "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
         "hh": None,
+        "dd": None,
     },
 ) as dag:
     submit_databricks_job = DatabricksSubmitRunOperator(
