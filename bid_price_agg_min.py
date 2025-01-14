@@ -539,12 +539,17 @@ def main() -> None:
         help="optional cgid_mod values for IHP",
     )
     # get the command line args
+
     args = parser.parse_args()
     logger.info(args)
     logger.info(args.date)
     logger.info(args.hour)
     yesterday_date = (datetime.now() - timedelta(days=1)).date()
     yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
+
+    if args.date in [None, 'None']:
+        args.date = yesterday_date_str
+
     if not args.mods:
         mods = [999]
     else:
@@ -552,7 +557,7 @@ def main() -> None:
 
     BidderLogAggregationMin(
         env=args.environment,
-        data_source_date=args.date if args.date else yesterday_date_str,
+        data_source_date=args.date,
         data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()

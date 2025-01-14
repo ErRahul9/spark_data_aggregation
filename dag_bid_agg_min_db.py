@@ -66,7 +66,7 @@ with DAG(
     params={
         "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
         "hh": None,
-        "dd": None,
+        "dd": None
     },
 ) as dag:
     submit_databricks_job = DatabricksSubmitRunOperator(

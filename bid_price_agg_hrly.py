@@ -524,6 +524,7 @@ def main() -> None:
         "-dd",
         "--date",
         type=parse_date,
+        default=None,
         help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
     )
     parser.add_argument(
@@ -547,6 +548,9 @@ def main() -> None:
     logger.info(args.date)
     logger.info(args.hour)
 
+    if args.date in [None, 'None']:
+        args.date = yesterday_date_str
+
     if not args.mods:
         mods = [999]
     else:
@@ -554,7 +558,7 @@ def main() -> None:
 
     BidderLogAggregationHour(
         env=args.environment,
-        data_source_date=args.date if args.date is not None else yesterday_date_str,
+        data_source_date=args.date,
         data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()
