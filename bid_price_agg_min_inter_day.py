@@ -534,25 +534,21 @@ def main() -> None:
     else:
         mods = list(map(int, args.mods.split()))
 
-    def calculate_hours(execution_date=args.execution_date):
-        exec_dt = datetime.strptime(execution_date, "%Y-%m-%d %H:%M:%S%z")
-        exec_hour = exec_dt.hour
-        if exec_hour == 0:
-            process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
-            hours = [18, 19, 20, 21, 22, 23]
-        else:
-            process_date = exec_dt.strftime("%Y-%m-%d")
-            hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
-        logger.info(f"running tasks for  {process_date} and following hours {hours}")
-        return {"process_date":process_date,
-                "hours":hours}
-
-
+    # def calculate_hours(execution_date=args.execution_date):
+    exec_dt = datetime.strptime(args.execution_date, "%Y-%m-%d %H:%M:%S%z")
+    exec_hour = exec_dt.hour
+    if exec_hour == 0:
+        process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+        hours = [18, 19, 20, 21, 22, 23]
+    else:
+        process_date = exec_dt.strftime("%Y-%m-%d")
+        hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
+    logger.info(f"running tasks for  {process_date} and following hours {hours}")
 
     BidderLogAggregationMin(
         env=args.environment,
-        data_source_date=calculate_hours().get("prcess_date"),
-        data_source_hour=calculate_hours().get("hours"),
+        data_source_date=process_date,
+        data_source_hour=hours,
         cgid_mods=mods,
     ).populate()
 
