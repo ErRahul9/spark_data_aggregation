@@ -2,12 +2,12 @@ import argparse
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
-from datetime import datetime
+
 from datetime import timedelta
 from typing import Dict
 from typing import List
-from dateutil.parser import parse
+
+from dateutil import parser as date_parser
 import boto3
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -190,8 +190,12 @@ class BidderLogAggregationHour:
             print(paths)
 
         logger.info(f"following partitions are missing in S3 {missed_files}")
+        
         if valid_paths:
             df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
+        
+        logger.info(f"aggregating  {valid_paths}")
+
 
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
         df_columns_selected = df_bid_select.select(
@@ -478,6 +482,7 @@ def main() -> None:
         "-execution_date",
         "--execution_date",
         type=str,
+        default="2025-01-16T12:00:00+00:00",
         help="Execution date in 'YYYY-MM-DDTHH:MM:SS' format",
     )
 
@@ -498,7 +503,7 @@ def main() -> None:
     else:
         mods = list(map(int, args.mods.split()))
 
-    exec_dt = dateutil.parser.parse(args.execution_date)
+    exec_dt = date_parser.parse(args.execution_date)
 
     exec_hour = exec_dt.hour
     if exec_hour == 0:
@@ -511,12 +516,12 @@ def main() -> None:
     print(process_date)
     print(hours)
 
-    BidderLogAggregationHour(
-        env=args.environment,
-        data_source_date=process_date,
-        data_source_hour=hours,
-        cgid_mods=mods,
-    ).populate()
+    # BidderLogAggregationHour(
+    #     env=args.environment,
+    #     data_source_date=process_date,
+    #     data_source_hour=hours,
+    #     cgid_mods=mods,
+    # ).populate()
 
 
 if __name__ == "__main__":

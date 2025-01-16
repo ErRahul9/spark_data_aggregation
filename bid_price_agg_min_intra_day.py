@@ -2,12 +2,12 @@ import argparse
 import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
-from datetime import date
-from datetime import datetime
+
 from datetime import timedelta
 from typing import Dict
 from typing import List
 
+from dateutil import parser as date_parser
 import boto3
 import pyspark.sql.functions as F
 from pyspark.sql import DataFrame
@@ -535,7 +535,7 @@ def main() -> None:
     else:
         mods = list(map(int, args.mods.split()))
 
-    exec_dt = dateutil.parser.parse(args.execution_date)
+    exec_dt = date_parser.parse(args.execution_date)
     
     exec_hour = exec_dt.hour
     if exec_hour == 0:
