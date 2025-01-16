@@ -9,25 +9,21 @@ from airflow.utils.dates import days_ago
 
 
 
-
-
 DATABRICKS_CLUSTER_JSON = {
     "access_control_list": [
         {"user_name": "rparashar@mountain.com", "permission_level": "CAN_MANAGE"}
     ],
     "tasks": [
         {
-            "task_key": "intraday_jobs/bid_price_agg_min_inter_day.py",
+            "task_key": "bid_price_agg_min_inter_day.py",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
                 "python_file": "bid_price_agg_min.py",
                 "parameters": [
                     "-e",
                     "prod",
-                    "-run_date_time",
+                    "-execution_date",
                     "{{ execution_date }}",
-                    "-next_run_date",
-                    "{{ next_execution_date }}",
                     "-mods",
                     "{{ params.mods }}",
                 ],
