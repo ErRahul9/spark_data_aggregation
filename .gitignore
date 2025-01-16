@@ -1,0 +1,33 @@
+# Ignore compiled Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore the virtual environment directory
+venv/
+
+# Ignore the project's dependency directory
+# If you use pipenv, this is where your dependencies are stored
+# Replace 'env/' with 'Pipfile.lock' if using pipenv
+env/
+
+# Ignore logs and temporary files
+*.log
+*.swp
+*.swo
+*.tmp
+.env
+
+# Ignore database files
+*.db
+
+# Ignore user-specific configuration files
+*.ini
+
+# Ignore project-specific settings files
+settings.ini
+
+# Ignore sensitive or secret information
+secrets.ini
+secrets.json
