@@ -450,6 +450,7 @@ class BidderLogAggregationHour:
         logger.log(self.log_level, "Begin 'save'")
         with ThreadPoolExecutor() as executer:
             for key, data_frames in dfs.items():
+                print(f"{self.s3_path_out}/{key}")
                 outpath = f"{self.s3_path_out}/{key}"
                 for df in data_frames:
                     executer.submit(self.save_parquet(path=outpath, df=df))
@@ -516,12 +517,12 @@ def main() -> None:
     print(process_date)
     print(hours)
 
-    # BidderLogAggregationHour(
-    #     env=args.environment,
-    #     data_source_date=process_date,
-    #     data_source_hour=hours,
-    #     cgid_mods=mods,
-    # ).populate()
+    BidderLogAggregationHour(
+        env=args.environment,
+        data_source_date=process_date,
+        data_source_hour=hours,
+        cgid_mods=mods,
+    ).populate()
 
 
 if __name__ == "__main__":
