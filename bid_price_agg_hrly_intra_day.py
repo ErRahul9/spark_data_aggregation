@@ -80,7 +80,7 @@ class BidderLogAggregationHour:
 
     @property
     def base_path(self) -> str:
-        return f"s3://{self.data_source_bucket}/bid_price_log_v2"
+        return f"s3://{self.data_source_bucket}/bid_price_log_agg_hrly_intraday_v2"
 
     @property
     def data_source_athena_table(self) -> str:
