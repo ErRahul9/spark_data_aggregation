@@ -41,6 +41,18 @@ urllib3 = {version = ">=1.25.4,<2.2.0 || >2.2.0,<3", markers = "python_version >
 crt = ["awscrt (==0.22.0)"]
 
 [[package]]
+name = "databricks"
+version = "0.2"
+description = ""
+category = "main"
+optional = false
+python-versions = "*"
+files = [
+    {file = "databricks-0.2-py2.py3-none-any.whl", hash = "sha256:2d4384b4d1f992ac9c94b0933a61082a61ee6bae5e95a208d1e843216d860adf"},
+    {file = "databricks-0.2.tar.gz", hash = "sha256:f20074914eea742cdc5f0b60db18b2408c62d90b50013adf5614f00a2e042059"},
+]
+
+[[package]]
 name = "jmespath"
 version = "1.0.1"
 description = "JSON Matching Expressions"
@@ -151,4 +163,4 @@ zstd = ["zstandard (>=0.18.0)"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.11"
-content-hash = "c57824d293f790298b423a9e6f6956102c5223354687d1cf0b232082d879ee6c"
+content-hash = "24abd524a194a01a6e1bb58b48054859756dab7eba3e49a7da7225539054096d"

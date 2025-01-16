@@ -196,7 +196,7 @@ class BidderLogAggregationMin:
             df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(
                 *valid_paths
             )
-
+        logger.info(f"aggregating  {valid_paths}")
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
         df_columns_selected = df_bid_select.select(
             F.col("epoch"),
@@ -542,8 +542,11 @@ def main() -> None:
         else:
             process_date = exec_dt.strftime("%Y-%m-%d")
             hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
+        logger.info(f"running tasks for  {process_date} and followign hours {hours}")
         return {"process_date":process_date,
                 "hours":hours}
+
+
 
 
 

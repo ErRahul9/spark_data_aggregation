@@ -15,10 +15,10 @@ DATABRICKS_CLUSTER_JSON = {
     ],
     "tasks": [
         {
-            "task_key": "bid_price_agg_min_inter_day.py",
+            "task_key": "bid_price_agg_min_inter_day",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "bid_price_agg_min.py",
+                "python_file": "bid_price_agg_min_inter_day.py",
                 "parameters": [
                     "-e",
                     "prod",
@@ -73,7 +73,7 @@ with DAG(
 
 
     submit_databricks_job = DatabricksSubmitRunOperator(
-        task_id="submit_databricks_job",
+        task_id="databricks_bidder_log_aggregation_min_intraday",
         databricks_conn_id="databricks_bidder",  # Connection ID configured in Airflow
         json=DATABRICKS_CLUSTER_JSON,  # Pass the job configuration
     )
