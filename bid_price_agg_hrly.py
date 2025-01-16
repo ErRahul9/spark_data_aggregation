@@ -194,9 +194,9 @@ class BidderLogAggregationHour:
         logger.log(self.log_level, "Begin '_bid_price_log_aggregation'")
         valid_paths = [path for path in self.s3_path if self.path_exists(path)]
         missed_files = [missed for missed in self.s3_path if not self.path_exists(missed)]
-        df_bid_select = None
         for paths in valid_paths:
             print(paths)
+
         logger.info(f"following partitions are missing in S3 {missed_files}")
         if valid_paths:
             df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
@@ -483,7 +483,7 @@ def main() -> None:
     parser.add_argument(
         "-dd",
         "--date",
-        type=str,
+        type=parse_date,
         required=False,
         help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
     )
