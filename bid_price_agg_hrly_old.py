@@ -127,8 +127,6 @@ class BidderLogAggregationHour:
             .config("spark.sql.hive.convertMetastoreParquet", "false")
             .config("hive.exec.dynamic.partition", "true")
             .config("hive.exec.dynamic.partition.mode", "nonstrict")
-            .config("spark.sql.adaptive.enabled", "true")
-            .config("spark.sql.adaptive.skewJoin.enabled", "true")
             .config("spark.sql.optimizer.dynamicPartitionPruning.enabled", "true")
             .config("spark.driver.maxResultSize", "32G")
             .config("spark.sql.shuffle.partitions", "10000")
@@ -181,24 +179,29 @@ class BidderLogAggregationHour:
                 StructField("daily_campaign_group_impression_cap", StringType(), True),
                 StructField("picked_term_id", StringType(), True),
                 StructField("eligible_term_ids", StringType(), True),
-                StructField("terms", ArrayType(MapType(StringType(), StringType())), True),
+                StructField(
+                    "terms", ArrayType(MapType(StringType(), StringType())), True
+                ),
             ]
         )
 
-    def path_exists(self, s3_uri):  # type: ignore[no-untyped-def]
-        bucket, key = s3_uri.replace("s3://", "").split("/", 1)
-        return self.s3_path_exists(bucket, key)
+    # def path_exists(self, s3_uri):  # type: ignore[no-untyped-def]
+    #     bucket, key = s3_uri.replace("s3://", "").split("/", 1)
+    #     return self.s3_path_exists(bucket, key)
 
     def _get_bidder_logs_df(self) -> Dict[str, List[DataFrame]]:
         logger.log(self.log_level, "Begin '_get_bidder_logs_df'")
         logger.log(self.log_level, "Begin '_bid_price_log_aggregation'")
-        valid_paths = [path for path in self.s3_path if self.path_exists(path)]
-        missed_files = [missed for missed in self.s3_path if not self.path_exists(missed)]
-        for paths in valid_paths:
-            print(paths)
-        logger.info(f"following partitions are missing in S3 {missed_files}")
-        if valid_paths:
-            df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
+        # valid_paths = [path for path in self.s3_path if self.path_exists(path)]
+        # missed_files = [missed for missed in self.s3_path if not self.path_exists(missed)]
+        # for paths in valid_paths:
+        #     print(paths)
+
+        # logger.info(f"following partitions are missing in S3 {missed_files}")
+        # if valid_paths:
+        #     df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
+        # df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*self.s3_path)
+        df_bid_select = self.spark.read.parquet(*self.s3_path)
 
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
         df_columns_selected = df_bid_select.select(
@@ -208,7 +211,7 @@ class BidderLogAggregationHour:
             F.col("campaign_id"),
             F.col("flight_id"),
             F.col("auction_id"),
-            F.col("has_price").cast("boolean"),
+            F.col("has_price").cast("Boolean"),
             F.col("price"),
             F.col("threshold_failure_reasons").alias("threshold_failure_reasons"),
             F.from_json(F.col("pacing_debug_data"), self.nested_schema)
@@ -269,7 +272,9 @@ class BidderLogAggregationHour:
             .getField("daily_campaign_group_impression_cap")
             .alias("daily_campaign_group_impression_cap"),
             (F.col("campaign_group_id") % 100).alias("cgid_mod"),
-            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias("dt"),
+            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias(
+                "dt"
+            ),
             (F.hour(F.from_unixtime(F.col("epoch") / 1000))).alias("hh"),
         )
         df_cg_id_agg = df_columns_selected.groupby(
@@ -281,16 +286,24 @@ class BidderLogAggregationHour:
             F.col("hh").alias("hh"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
+            # F.sum(F.when(F.col("has_price"), 1)).alias("total_bids"),
+            # F.sum(F.when(~F.col("has_price"), 1)).alias("total_204_bids"),
             F.sum(F.col("price")).alias("bid_price_per_hour"),
-            F.max(F.col("flight_campaign_group_spend")).alias("max_flight_campaign_group_spend"),
+            F.max(F.col("flight_campaign_group_spend")).alias(
+                "max_flight_campaign_group_spend"
+            ),
             F.max(F.col("flight_campaign_group_spend_cap")).alias(
                 "max_flight_campaign_group_spend_cap"
             ),
-            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
+            F.max(F.col("flight_campaign_impression")).alias(
+                "max_flight_campaign_impression"
+            ),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
@@ -300,7 +313,9 @@ class BidderLogAggregationHour:
             F.max(F.col("flight_campaign_group_impression_cap")).alias(
                 "max_flight_campaign_group_impression_cap"
             ),
-            F.max(F.col("daily_campaign_group_spend")).alias("max_daily_campaign_group_spend"),
+            F.max(F.col("daily_campaign_group_spend")).alias(
+                "max_daily_campaign_group_spend"
+            ),
             F.max(F.col("daily_campaign_group_spend_cap")).alias(
                 "max_daily_campaign_group_spend_cap"
             ),
@@ -322,20 +337,32 @@ class BidderLogAggregationHour:
             F.col("hh").alias("hh"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
+            # F.count(F.when(F.col("has_price"), 1)).alias("total_bids"),
+            # F.count(F.when(~F.col("has_price"), 1)).alias("count_of_204_bids"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
             F.sum(F.col("price")).alias("bid_price_per_hour"),
             F.max(F.col("flight_campaign_spend")).alias("max_flight_campaign_spend"),
-            F.max(F.col("flight_campaign_spend_cap")).alias("max_flight_campaign_spend_cap"),
+            F.max(F.col("flight_campaign_spend_cap")).alias(
+                "max_flight_campaign_spend_cap"
+            ),
             F.max(F.col("daily_campaign_spend")).alias("max_daily_campaign_spend"),
-            F.max(F.col("daily_campaign_spend_cap")).alias("max_daily_campaign_spend_cap"),
-            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
+            F.max(F.col("daily_campaign_spend_cap")).alias(
+                "max_daily_campaign_spend_cap"
+            ),
+            F.max(F.col("flight_campaign_impression")).alias(
+                "max_flight_campaign_impression"
+            ),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
-            F.max(F.col("daily_campaign_impression")).alias("max_daily_campaign_impression"),
+            F.max(F.col("daily_campaign_impression")).alias(
+                "max_daily_campaign_impression"
+            ),
             F.max(F.col("daily_campaign_impression_cap")).alias(
                 "max_daily_campaign_impression_cap"
             ),
@@ -352,7 +379,7 @@ class BidderLogAggregationHour:
             F.col("eligible_term_id"),
             F.col("picked_term_id"),
             F.col("auction_id"),
-            F.col("has_price").cast("boolean"),
+            F.col("has_price").cast("Boolean"),
             F.col("threshold_failure_reasons"),
             F.explode(F.col("terms")).alias("exploded_terms"),
         )
@@ -369,12 +396,18 @@ class BidderLogAggregationHour:
             F.col("auction_id"),
             F.col("eligible_term_id"),
             F.col("picked_term_id"),
-            F.col("has_price").cast("boolean"),
+            F.col("has_price").cast("Boolean"),
             F.col("exploded_terms").getField("id").alias("term_id"),
             F.col("exploded_terms").getField("spend").alias("term_spend"),
             F.col("exploded_terms").getField("spend_cap").alias("term_spend_cap"),
-            F.col("exploded_terms").getField("spend_capped").alias("spend_capped"),
-            F.col("exploded_terms").getField("rate_limited").alias("rate_limited"),
+            F.col("exploded_terms")
+            .getField("spend_capped")
+            .alias("spend_capped")
+            .cast("Boolean"),
+            F.col("exploded_terms")
+            .getField("rate_limited")
+            .alias("rate_limited")
+            .cast("Boolean"),
             F.col("exploded_terms")
             .getField("throttling_percentage")
             .alias("throttling_percentage"),
@@ -396,7 +429,9 @@ class BidderLogAggregationHour:
             F.col("term_id"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
+                "total_bids"
+            ),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
@@ -421,7 +456,9 @@ class BidderLogAggregationHour:
         ).agg(F.count(F.col("auction_id")).alias("fail_count_cg_id"))
 
         df_cg_id_data = df_cg_id_agg.join(
-            df_failure_reasons_cg_id, on=["dt", "hh", "campaign_group_id", "flight_id"], how="outer"
+            df_failure_reasons_cg_id,
+            on=["dt", "hh", "campaign_group_id", "flight_id"],
+            how="inner",
         )
 
         df_failure_reasons_c_id = df_columns_selected.groupby(
@@ -429,7 +466,9 @@ class BidderLogAggregationHour:
             F.col("hh").alias("hh"),
             F.col("campaign_group_id"),
             F.col("campaign_id"),
-            F.col("threshold_failure_reasons").alias("campaign_threshold_failure_reasons"),
+            F.col("threshold_failure_reasons").alias(
+                "campaign_threshold_failure_reasons"
+            ),
         ).agg(F.count(F.col("auction_id")).alias("fail_count_campaign_id"))
 
         df_camp_data = df_cam_agg.join(
@@ -468,6 +507,8 @@ class BidderLogAggregationHour:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    yesterday_date = (datetime.now() - timedelta(days=1)).date()
+    yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
 
     def parse_date(date_str):  # type: ignore[no-untyped-def]
         return datetime.strptime(date_str, "%Y-%m-%d").date()
@@ -482,7 +523,8 @@ def main() -> None:
     parser.add_argument(
         "-dd",
         "--date",
-        type=parse_date,
+        type=str,
+        required=False,
         help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
     )
     parser.add_argument(
@@ -497,6 +539,7 @@ def main() -> None:
         "--mods",
         required=False,
         type=str,
+        # default=[999],
         help="optional cgid_mod values for IHP",
     )
     # get the command line args
@@ -504,8 +547,10 @@ def main() -> None:
     logger.info(args)
     logger.info(args.date)
     logger.info(args.hour)
-    yesterday_date = (datetime.now() - timedelta(days=1)).date()
-    yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
+
+    if args.date in [None, 'None']:
+        args.date = yesterday_date_str
+
     if not args.mods:
         mods = [999]
     else:
@@ -513,7 +558,7 @@ def main() -> None:
 
     BidderLogAggregationHour(
         env=args.environment,
-        data_source_date=args.date if args.date else yesterday_date_str,
+        data_source_date=args.date,
         data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()
