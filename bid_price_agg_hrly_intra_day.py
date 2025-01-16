@@ -452,6 +452,7 @@ class BidderLogAggregationHour:
             logger.log(self.log_level, "End 'save'")
 
     def save_parquet(self, path: str, df: DataFrame):  # type: ignore[no-untyped-def]
+        print(path)
         df.write.mode("append").partitionBy(*self.partition_columns).parquet(path)
 
     def populate(self):  # type: ignore[no-untyped-def]
