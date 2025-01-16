@@ -31,3 +31,5 @@ settings.ini
 # Ignore sensitive or secret information
 secrets.ini
 secrets.json
+
+.DS_STORE
