@@ -535,8 +535,8 @@ def main() -> None:
     else:
         mods = list(map(int, args.mods.split()))
 
-    # def calculate_hours(execution_date=args.execution_date):
-    exec_dt = datetime.strptime(args.execution_date, "%Y-%m-%dT%H:%M:%S%z")
+    exec_dt = dateutil.parser.parse(args.execution_date)
+    
     exec_hour = exec_dt.hour
     if exec_hour == 0:
         process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
