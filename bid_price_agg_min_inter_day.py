@@ -34,6 +34,7 @@ class BidderLogAggregationMin:
     ):
         self._env = env
         self._data_source_date = data_source_date
+        self._data_source_hour = data_source_hour
         self._cgid_mods = cgid_mods
         self._log_level = log_level
 
@@ -534,7 +535,7 @@ def main() -> None:
         mods = list(map(int, args.mods.split()))
 
     def calculate_hours(execution_date=args.execution_date):
-        exec_dt = datetime.strptime(execution_date, "%Y-%m-%dT%H:%M:%S")
+        exec_dt = datetime.strptime(execution_date, "%Y-%m-%d %H:%M:%S%z")
         exec_hour = exec_dt.hour
         if exec_hour == 0:
             process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
@@ -542,11 +543,9 @@ def main() -> None:
         else:
             process_date = exec_dt.strftime("%Y-%m-%d")
             hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
-        logger.info(f"running tasks for  {process_date} and followign hours {hours}")
+        logger.info(f"running tasks for  {process_date} and following hours {hours}")
         return {"process_date":process_date,
                 "hours":hours}
-
-
 
 
 
