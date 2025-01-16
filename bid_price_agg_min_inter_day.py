@@ -499,8 +499,8 @@ class BidderLogAggregationMin:
 def main() -> None:
     parser = argparse.ArgumentParser()
 
-    def parse_date(date_str):  # type: ignore[no-untyped-def]
-        return datetime.strptime(date_str, "%Y-%m-%d").date()
+    # def parse_date(date_str):  # type: ignore[no-untyped-def]
+    #     return datetime.strptime(date_str, "%Y-%m-%d").date()
 
     parser.add_argument(
         "-e",
@@ -514,6 +514,7 @@ def main() -> None:
         "-execution_date",
         "--execution_date",
         type=str,
+        default="2025-01-16 16:43:52+00:00",
         help="Execution date in 'YYYY-MM-DDTHH:MM:SS' format",
     )
 
@@ -544,6 +545,8 @@ def main() -> None:
         process_date = exec_dt.strftime("%Y-%m-%d")
         hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
     logger.info(f"running tasks for  {process_date} and following hours {hours}")
+    print(process_date)
+    print(hours)
 
     BidderLogAggregationMin(
         env=args.environment,
