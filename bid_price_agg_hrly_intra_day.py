@@ -477,7 +477,6 @@ def main() -> None:
         "-execution_date",
         "--execution_date",
         type=str,
-        default="2025-01-16 16:43:52+00:00",
         help="Execution date in 'YYYY-MM-DDTHH:MM:SS' format",
     )
 
