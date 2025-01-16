@@ -2,9 +2,7 @@ import json
 from datetime import timedelta, datetime
 
 from airflow import DAG
-from airflow.providers.databricks.operators.databricks import (
-    DatabricksSubmitRunOperator,
-)
+from airflow.providers.databricks.operators.databricks import (DatabricksSubmitRunOperator,)
 from airflow.utils.dates import days_ago
 
 
@@ -18,7 +16,7 @@ DATABRICKS_CLUSTER_JSON = {
             "task_key": "bid_price_agg_min_inter_day",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "bid_price_agg_min_inter_day.py",
+                "python_file": "intraday_jobs/bid_price_agg_min_inter_day.py",
                 "parameters": [
                     "-e",
                     "prod",
