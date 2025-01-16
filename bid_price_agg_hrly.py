@@ -515,7 +515,7 @@ def main() -> None:
 
     BidderLogAggregationHour(
         env=args.environment,
-        data_source_date=args.date if args.date else yesterday_date_str,
+        data_source_date=args.date if args.date not in (None, 'None') else yesterday_date_str,
         data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()
