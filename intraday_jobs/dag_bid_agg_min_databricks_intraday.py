@@ -58,14 +58,14 @@ DATABRICKS_CLUSTER_JSON = {
 
 
 default_args = {"owner": "airflow"}
-
+tomorrow_morning = (datetime.now() + timedelta(days=1)).replace(hour=6, minute=0, second=0, microsecond=0)
 with DAG(
     "dag_databricks_bidder_log_aggregation_min_intraday",
-    start_date=days_ago(2),
+    start_date=tomorrow_morning,
     schedule_interval="0 */6 * * *",
     default_args=default_args,
     params={
-        "mods": "15",
+        "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
     },
 ) as dag:
 

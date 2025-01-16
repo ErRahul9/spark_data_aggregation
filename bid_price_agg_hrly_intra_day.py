@@ -503,10 +503,9 @@ def main() -> None:
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
-
     exec_dt = date_parser.parse(args.execution_date)
-
     exec_hour = exec_dt.hour
+    print(f'execution date for the job is {exec_dt} and hour for execution is {exec_dt.hour}')
     if exec_hour == 0:
         process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
         hours = [18, 19, 20, 21, 22, 23]
