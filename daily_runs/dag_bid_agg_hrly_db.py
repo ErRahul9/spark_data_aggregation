@@ -13,7 +13,7 @@ DATABRICKS_CLUSTER_JSON = {
             "task_key": "bidder_log_aggregation_hrly",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "bid_price_agg_hrly.py",
+                "python_file": "bid_price_agg_hrly_old.py",
                 "parameters": [
                     "-e",
                     "prod",

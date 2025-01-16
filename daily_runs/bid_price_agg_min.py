@@ -52,13 +52,13 @@ class BidderLogAggregationMin:
 
     @property
     def data_source_hour(self):  # type: ignore[no-untyped-def]
-        # if self._data_source_hour is None or self._data_source_hour == "None":
-        #     return None
+        if self._data_source_hour is None or self._data_source_hour == "None":
+            return None
         return self._data_source_hour
 
     @property
     def s3_path_out(self):  # type: ignore[no-untyped-def]
-        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_min_intraday_v2/"
+        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_min_v2/"
         return S3Path
 
     @property
@@ -88,13 +88,20 @@ class BidderLogAggregationMin:
 
     @property
     def data_source_prefix(self) -> list:
-        hours = self.data_source_hour
+        hours = range(24)
         if 999 in self.get_cgid_mods:
-            return [f"dt={self.data_source_date}/hh={hour:02d}" for hour in self.data_source_hour]
+            if self.data_source_hour is None or self.data_source_hour in "":
+                return [f"dt={self.data_source_date}/hh={hour:02d}" for hour in hours]
+            return [f"dt={self.data_source_date}/hh={self.data_source_hour}"]
         else:
+            if self.data_source_hour is None or self.data_source_hour in "":
+                return [
+                    f"dt={self.data_source_date}/hh={hour:02d}/cgid_mod={mod}"
+                    for hour in hours
+                    for mod in self.get_cgid_mods
+                ]
             return [
-                f"dt={self.data_source_date}/hh={hour:02d}/cgid_mod={mod}"
-                for hour in self.data_source_hour
+                f"dt={self.data_source_date}/hh={self.data_source_hour}/cgid_mod={mod}"
                 for mod in self.get_cgid_mods
             ]
 
@@ -174,9 +181,7 @@ class BidderLogAggregationMin:
                 StructField("daily_campaign_group_impression_cap", StringType(), True),
                 StructField("picked_term_id", StringType(), True),
                 StructField("eligible_term_ids", StringType(), True),
-                StructField(
-                    "terms", ArrayType(MapType(StringType(), StringType())), True
-                ),
+                StructField("terms", ArrayType(MapType(StringType(), StringType())), True),
             ]
         )
 
@@ -188,17 +193,13 @@ class BidderLogAggregationMin:
         logger.log(self.log_level, "Begin '_get_bidder_logs_df'")
         logger.log(self.log_level, "Begin '_bid_price_log_aggregation'")
         valid_paths = [path for path in self.s3_path if self.path_exists(path)]
-        missed_files = [
-            missed for missed in self.s3_path if not self.path_exists(missed)
-        ]
+        missed_files = [missed for missed in self.s3_path if not self.path_exists(missed)]
         for paths in valid_paths:
             print(paths)
 
         logger.info(f"following partitions are missing in S3 {missed_files}")
         if valid_paths:
-            df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(
-                *valid_paths
-            )
+            df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
 
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
         df_columns_selected = df_bid_select.select(
@@ -269,9 +270,7 @@ class BidderLogAggregationMin:
             .getField("daily_campaign_group_impression_cap")
             .alias("daily_campaign_group_impression_cap"),
             (F.col("campaign_group_id") % 100).alias("cgid_mod"),
-            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias(
-                "dt"
-            ),
+            (F.date_format(F.from_unixtime(F.col("epoch") / 1000), "yyyy-MM-dd")).alias("dt"),
             (F.hour(F.from_unixtime(F.col("epoch") / 1000))).alias("hh"),
             (F.minute(F.from_unixtime(F.col("epoch") / 1000))).alias("min"),
         )
@@ -285,22 +284,16 @@ class BidderLogAggregationMin:
             F.col("min").alias("min"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
-                "total_bids"
-            ),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
             F.sum(F.col("price")).alias("bid_price_per_min"),
-            F.max(F.col("flight_campaign_group_spend")).alias(
-                "max_flight_campaign_group_spend"
-            ),
+            F.max(F.col("flight_campaign_group_spend")).alias("max_flight_campaign_group_spend"),
             F.max(F.col("flight_campaign_group_spend_cap")).alias(
                 "max_flight_campaign_group_spend_cap"
             ),
-            F.max(F.col("flight_campaign_impression")).alias(
-                "max_flight_campaign_impression"
-            ),
+            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
@@ -310,9 +303,7 @@ class BidderLogAggregationMin:
             F.max(F.col("flight_campaign_group_impression_cap")).alias(
                 "max_flight_campaign_group_impression_cap"
             ),
-            F.max(F.col("daily_campaign_group_spend")).alias(
-                "max_daily_campaign_group_spend"
-            ),
+            F.max(F.col("daily_campaign_group_spend")).alias("max_daily_campaign_group_spend"),
             F.max(F.col("daily_campaign_group_spend_cap")).alias(
                 "max_daily_campaign_group_spend_cap"
             ),
@@ -335,30 +326,20 @@ class BidderLogAggregationMin:
             F.col("min").alias("min"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
-                "total_bids"
-            ),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
             F.sum(F.col("price")).alias("bid_price_per_min"),
             F.max(F.col("flight_campaign_spend")).alias("max_flight_campaign_spend"),
-            F.max(F.col("flight_campaign_spend_cap")).alias(
-                "max_flight_campaign_spend_cap"
-            ),
+            F.max(F.col("flight_campaign_spend_cap")).alias("max_flight_campaign_spend_cap"),
             F.max(F.col("daily_campaign_spend")).alias("max_daily_campaign_spend"),
-            F.max(F.col("daily_campaign_spend_cap")).alias(
-                "max_daily_campaign_spend_cap"
-            ),
-            F.max(F.col("flight_campaign_impression")).alias(
-                "max_flight_campaign_impression"
-            ),
+            F.max(F.col("daily_campaign_spend_cap")).alias("max_daily_campaign_spend_cap"),
+            F.max(F.col("flight_campaign_impression")).alias("max_flight_campaign_impression"),
             F.max(F.col("flight_campaign_impression_cap")).alias(
                 "max_flight_campaign_impression_cap"
             ),
-            F.max(F.col("daily_campaign_impression")).alias(
-                "max_daily_campaign_impression"
-            ),
+            F.max(F.col("daily_campaign_impression")).alias("max_daily_campaign_impression"),
             F.max(F.col("daily_campaign_impression_cap")).alias(
                 "max_daily_campaign_impression_cap"
             ),
@@ -420,9 +401,7 @@ class BidderLogAggregationMin:
             F.col("term_id"),
         ).agg(
             F.count(F.col("auction_id")).alias("total_bid_requests"),
-            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
-                "total_bids"
-            ),
+            F.sum(F.when(F.col("has_price").cast("boolean"), 1).otherwise(0)).alias("total_bids"),
             F.sum(F.when(~F.col("has_price").cast("boolean"), 1).otherwise(0)).alias(
                 "total_204_bids"
             ),
@@ -459,9 +438,7 @@ class BidderLogAggregationMin:
             F.col("min").alias("min"),
             F.col("campaign_group_id"),
             F.col("campaign_id"),
-            F.col("threshold_failure_reasons").alias(
-                "campaign_threshold_failure_reasons"
-            ),
+            F.col("threshold_failure_reasons").alias("campaign_threshold_failure_reasons"),
         ).agg(F.count(F.col("auction_id")).alias("fail_count_campaign_id"))
 
         df_camp_data = df_cam_agg.join(
@@ -511,22 +488,18 @@ def main() -> None:
         default="dev",
         help="The environment to run in (either 'dev' or 'prod').",
     )
-
     parser.add_argument(
         "-dd",
         "--date",
-        required=False,
-        type=str,
-        help="optional hour argument for data",
+        type=parse_date,
+        help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
     )
-
     parser.add_argument(
         "-hh",
         "--hour",
-        required=True,
-        nargs='+',
-        type = int,
-        help="hour array for the  data aggregation",
+        required=False,
+        type=str,
+        help="optional hour argument for data",
     )
     parser.add_argument(
         "-mods",
@@ -535,27 +508,22 @@ def main() -> None:
         type=str,
         help="optional cgid_mod values for IHP",
     )
-
+    # get the command line args
     args = parser.parse_args()
     logger.info(args)
-    logger.info(args.start_date)
+    logger.info(args.date)
     logger.info(args.hour)
     yesterday_date = (datetime.now() - timedelta(days=1)).date()
     yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
-
     if not args.mods:
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
 
-    # generate_hours = lambda runtime_hour, hours=6: [(runtime_hour - i) % 24 for i in range(hours)]
-    # runtime_hour = args.hour if args.hour is not None else datetime.now().hour
-    # hours_array = generate_hours(runtime_hour, args.hours)
-
     BidderLogAggregationMin(
         env=args.environment,
-        data_source_date=args.date,
-        data_source_hour=args.hour,
+        data_source_date=args.date if args.date not in (None,'None') else yesterday_date_str,
+        data_source_hour=args.hour if args.hour else None,
         cgid_mods=mods,
     ).populate()
 

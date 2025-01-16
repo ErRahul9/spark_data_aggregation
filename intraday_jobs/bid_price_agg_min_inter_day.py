@@ -28,13 +28,12 @@ class BidderLogAggregationMin:
         self,
         env: str,
         data_source_date: str,
-        data_source_hour: None,
         cgid_mods: List[int],
+        data_source_hour: List[int],
         log_level: int = logging.INFO,
     ):
         self._env = env
         self._data_source_date = data_source_date
-        self._data_source_hour = data_source_hour
         self._cgid_mods = cgid_mods
         self._log_level = log_level
 
@@ -52,13 +51,11 @@ class BidderLogAggregationMin:
 
     @property
     def data_source_hour(self):  # type: ignore[no-untyped-def]
-        if self._data_source_hour is None or self._data_source_hour == "None":
-            return None
         return self._data_source_hour
 
     @property
     def s3_path_out(self):  # type: ignore[no-untyped-def]
-        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_min_v2/"
+        S3Path = f"s3://mntn-data-archive-{self.env}/bid_price_log_agg_min_intraday_v2/"
         return S3Path
 
     @property
@@ -88,20 +85,13 @@ class BidderLogAggregationMin:
 
     @property
     def data_source_prefix(self) -> list:
-        hours = range(24)
+        # hours = self.data_source_hour
         if 999 in self.get_cgid_mods:
-            if self.data_source_hour is None or self.data_source_hour in "":
-                return [f"dt={self.data_source_date}/hh={hour:02d}" for hour in hours]
-            return [f"dt={self.data_source_date}/hh={self.data_source_hour}"]
+            return [f"dt={self.data_source_date}/hh={hour:02d}" for hour in self.data_source_hour]
         else:
-            if self.data_source_hour is None or self.data_source_hour in "":
-                return [
-                    f"dt={self.data_source_date}/hh={hour:02d}/cgid_mod={mod}"
-                    for hour in hours
-                    for mod in self.get_cgid_mods
-                ]
             return [
-                f"dt={self.data_source_date}/hh={self.data_source_hour}/cgid_mod={mod}"
+                f"dt={self.data_source_date}/hh={hour:02d}/cgid_mod={mod}"
+                for hour in self.data_source_hour
                 for mod in self.get_cgid_mods
             ]
 
@@ -518,20 +508,14 @@ def main() -> None:
         default="dev",
         help="The environment to run in (either 'dev' or 'prod').",
     )
+
     parser.add_argument(
-        "-dd",
-        "--date",
-        required=False,
+        "-execution_date",
+        "--execution_date",
         type=str,
-        help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
+        help="Execution date in 'YYYY-MM-DDTHH:MM:SS' format",
     )
-    parser.add_argument(
-        "-hh",
-        "--hour",
-        required=False,
-        type=str,
-        help="optional hour argument for data",
-    )
+
     parser.add_argument(
         "-mods",
         "--mods",
@@ -539,27 +523,34 @@ def main() -> None:
         type=str,
         help="optional cgid_mod values for IHP",
     )
-    # get the command line args
 
     args = parser.parse_args()
     logger.info(args)
-    logger.info(args.date)
-    logger.info(args.hour)
-    yesterday_date = (datetime.now() - timedelta(days=1)).date()
-    yesterday_date_str = yesterday_date.strftime("%Y-%m-%d")
-
-    if args.date in [None, 'None']:
-        args.date = yesterday_date_str
+    logger.info(args.execution_date)
 
     if not args.mods:
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
 
+    def calculate_hours(execution_date=args.execution_date):
+        exec_dt = datetime.strptime(execution_date, "%Y-%m-%dT%H:%M:%S")
+        exec_hour = exec_dt.hour
+        if exec_hour == 0:
+            process_date = (exec_dt - timedelta(days=1)).strftime("%Y-%m-%d")
+            hours = [18, 19, 20, 21, 22, 23]
+        else:
+            process_date = exec_dt.strftime("%Y-%m-%d")
+            hours = [(exec_hour - i - 1) % 24 for i in range(6)][::-1]
+        return {"process_date":process_date,
+                "hours":hours}
+
+
+
     BidderLogAggregationMin(
         env=args.environment,
-        data_source_date=args.date,
-        data_source_hour=args.hour if args.hour else None,
+        data_source_date=calculate_hours().get("prcess_date"),
+        data_source_hour=calculate_hours().get("hours"),
         cgid_mods=mods,
     ).populate()
 

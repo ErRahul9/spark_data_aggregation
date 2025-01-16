@@ -1,8 +1,15 @@
 import json
+from datetime import timedelta, datetime
 
 from airflow import DAG
-from airflow.providers.databricks.operators.databricks import DatabricksSubmitRunOperator
+from airflow.providers.databricks.operators.databricks import (
+    DatabricksSubmitRunOperator,
+)
 from airflow.utils.dates import days_ago
+
+
+
+
 
 DATABRICKS_CLUSTER_JSON = {
     "access_control_list": [
@@ -10,17 +17,17 @@ DATABRICKS_CLUSTER_JSON = {
     ],
     "tasks": [
         {
-            "task_key": "bidder_log_aggregation_min",
+            "task_key": "intraday_jobs/bid_price_agg_min_inter_day.py",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
                 "python_file": "bid_price_agg_min.py",
                 "parameters": [
                     "-e",
                     "prod",
-                    "-dd",
-                    "{{ params.dd }}",
-                    "-hh",
-                    "{{ params.hh }}",
+                    "-run_date_time",
+                    "{{ execution_date }}",
+                    "-next_run_date",
+                    "{{ next_execution_date }}",
                     "-mods",
                     "{{ params.mods }}",
                 ],
@@ -59,16 +66,16 @@ DATABRICKS_CLUSTER_JSON = {
 default_args = {"owner": "airflow"}
 
 with DAG(
-    "dag_databricks_bidder_log_aggregation_min",
+    "dag_databricks_bidder_log_aggregation_min_intraday",
     start_date=days_ago(2),
-    schedule_interval="15 16 * * *",
+    schedule_interval="0 */6 * * *",
     default_args=default_args,
     params={
-        "mods": "15 18 55 58 44 65 24 44 78 87 63 98 71 72 78 57 59 16 86 76 66 25 67 94 32 75",
-        "hh": None,
-        "dd": None
+        "mods": "15",
     },
 ) as dag:
+
+
     submit_databricks_job = DatabricksSubmitRunOperator(
         task_id="submit_databricks_job",
         databricks_conn_id="databricks_bidder",  # Connection ID configured in Airflow
