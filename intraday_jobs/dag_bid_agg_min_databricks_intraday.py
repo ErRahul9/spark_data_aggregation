@@ -13,10 +13,10 @@ DATABRICKS_CLUSTER_JSON = {
     ],
     "tasks": [
         {
-            "task_key": "bid_price_agg_min_inter_day",
+            "task_key": "bid_price_agg_min_intra_day",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "intraday_jobs/bid_price_agg_min_inter_day.py",
+                "python_file": "bid_price_agg_min_intra_day.py",
                 "parameters": [
                     "-e",
                     "prod",

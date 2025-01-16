@@ -15,15 +15,15 @@ DATABRICKS_CLUSTER_JSON = {
     ],
     "tasks": [
         {
-            "task_key": "bid_price_agg_hrly_inter_day",
+            "task_key": "bid_price_agg_hrly_intra_day",
             "run_if": "ALL_SUCCESS",
             "spark_python_task": {
-                "python_file": "/intraday_jobs/bid_price_agg_hrly_inter_day.py",
+                "python_file": "bid_price_agg_hrly_intra_day.py",
                 "parameters": [
                     "-e",
                     "prod",
                     "-execution_date",
-                    "{{ execution_date }}",
+                    "{{ datetime.strptime(execution_date, '%Y-%m-%dT%H:%M:%S%z') }}",
                     "-mods",
                     "{{ params.mods }}",
                 ],
