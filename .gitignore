@@ -33,3 +33,7 @@ secrets.ini
 secrets.json
 
 .DS_STORE
+
+.idea/
+.DS_Store
+.*

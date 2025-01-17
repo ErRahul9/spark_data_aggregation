@@ -502,6 +502,7 @@ def main() -> None:
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
+
     exec_dt = date_parser.parse(args.execution_date)
     exec_hour = exec_dt.hour
     print(f'execution date for the job is {exec_dt} and hour for execution is {exec_dt.hour}')
