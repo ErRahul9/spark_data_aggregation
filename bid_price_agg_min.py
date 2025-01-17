@@ -491,7 +491,8 @@ def main() -> None:
     parser.add_argument(
         "-dd",
         "--date",
-        type=parse_date,
+        type=str,
+        required=False,
         help="The date to populate the data source id, formatted as 'YYYY-MM-DD'.",
     )
     parser.add_argument(
