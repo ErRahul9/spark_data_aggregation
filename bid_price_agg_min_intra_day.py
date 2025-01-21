@@ -531,7 +531,8 @@ def main() -> None:
     logger.info(args)
     logger.info(args.execution_date)
 
-    if not args.mods:
+
+    if args.mods in (None, 'None'):
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
