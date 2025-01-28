@@ -503,7 +503,7 @@ def main() -> None:
         "-mods",
         "--mods",
         required=False,
-        type=lambda x: datetime.fromisoformat(x),
+        type=str,
         help="optional cgid_mod values for IHP",
     )
 
@@ -516,8 +516,8 @@ def main() -> None:
         mods = [999]
     else:
         mods = list(map(int, args.mods.split()))
-
-    exec_dt = date_parser.parse(args.execution_date)
+    exec_dt = lambda x: datetime.fromisoformat(args.execution_date)
+    # exec_dt = date_parser.parse(args.execution_date)
     print(f'execution date for the job is {exec_dt} and hour for execution is {exec_dt.hour}')
     exec_hour = exec_dt.hour
     if exec_hour == 0:
