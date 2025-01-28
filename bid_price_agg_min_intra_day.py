@@ -3,7 +3,7 @@ import logging
 import os
 from concurrent.futures import ThreadPoolExecutor
 
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Dict
 from typing import List
 
@@ -503,7 +503,7 @@ def main() -> None:
         "-mods",
         "--mods",
         required=False,
-        type=str,
+        type=lambda x: datetime.fromisoformat(x),
         help="optional cgid_mod values for IHP",
     )
 
