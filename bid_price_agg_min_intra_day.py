@@ -178,6 +178,7 @@ class BidderLogAggregationMin:
                 *valid_paths
             )
         logger.info(f"aggregating  {valid_paths}")
+        df_bid_select = self.spark.createDataFrame([], StructType([]))
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
         df_columns_selected = df_bid_select.select(
             F.col("epoch"),
