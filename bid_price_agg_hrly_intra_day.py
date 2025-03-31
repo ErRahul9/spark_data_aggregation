@@ -164,20 +164,12 @@ class BidderLogAggregationHour:
     def _get_bidder_logs_df(self) -> Dict[str, List[DataFrame]]:
         logger.log(self.log_level, "Begin '_get_bidder_logs_df'")
         logger.log(self.log_level, "Begin '_bid_price_log_aggregation'")
-        # valid_paths = [path for path in self.s3_path if self.path_exists(path)]
         valid_paths = [path for path in self.s3_path]
-        missed_files = [missed for missed in self.s3_path if not self.path_exists(missed)]
         for paths in valid_paths:
             print(paths)
-        for missed in missed_files:
-            print(f'{missed} files are missing')
-
-        logger.info(f"following partitions are missing in S3 {missed_files}")
-
         if valid_paths:
             df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(*valid_paths)
-            df_bid_select.printSchema()  # Print the schema to verify the presence of 'epoch'
-
+            df_bid_select.printSchema()
         logger.info(f"aggregating  {valid_paths}")
 
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
