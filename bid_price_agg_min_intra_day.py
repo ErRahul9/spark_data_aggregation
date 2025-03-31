@@ -173,11 +173,14 @@ class BidderLogAggregationMin:
             print(paths)
 
         logger.info(f"following partitions are missing in S3 {missed_files}")
-        df_bid_select = self.spark.createDataFrame([], StructType([]))
-        if valid_paths:
-            df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(
-                *valid_paths
-            )
+        # df_bid_select = self.spark.createDataFrame([], StructType([]))
+
+        for paths in valid_paths:
+            print(paths)
+        # if valid_paths:
+        df_bid_select = self.spark.read.option("basePath", self.base_path).parquet(
+            *valid_paths
+        )
         logger.info(f"aggregating  {valid_paths}")
 
         F.from_json(F.col("pacing_debug_data"), self.nested_schema).getField("terms")
